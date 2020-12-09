@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - materials - shaders [custom]</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+	</head>
+	<body>
+
+		<div id="container"></div>
+		
+		<script id="vertexShaderRaw" type="x-shader/x-vertex">
+
+			precision mediump float;
+			precision mediump int;
+
+			uniform mat4 modelViewMatrix; // optional
+			uniform mat4 projectionMatrix; // optional
+
+			attribute vec3 position;
+			attribute vec4 color;
+
+			varying vec3 vPosition;
+			varying vec4 vColor;
+
+			void main()	{
+
+				vPosition = position;
+				vColor = color;
+
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+			}
+
+		</script>
+
+		<script id="fragmentShaderRaw" type="x-shader/x-fragment">
+
+			precision mediump float;
+			precision mediump int;
+
+			uniform float time;
+
+			varying vec3 vPosition;
+			varying vec4 vColor;
+
+			void main()	{
+
+				vec4 color = vec4( vColor );
+				color.r += sin( vPosition.x * 10.0 + time ) * 0.5;
+
+				gl_FragColor = color;
+
+			}
+
+		</script>
+
+
+
+
+
+
+
+
+		
+
+
+		<script type="module">
+
+			import * as THREE from './three.js/build/three.module.js';
+
+			import Stats from './three.js/examples/jsm/libs/stats.module.js';
+
+			import {Water}  from './three.js/examples/jsm/objects/Water.js';
+
+			var container, stats;
+
+			var camera, scene, renderer, clock;
+
+			init();
+			animate();
+
+			function init() {
+
+				container = document.getElementById( 'container' );
+
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 3000 );
+				camera.position.z = 4;
+
+				scene = new THREE.Scene();
+
+				clock = new THREE.Clock();
+
+				
+
+
+				
+
+
+				//
+				var trianglesCount = 300;
+
+				var geometry = new THREE.BufferGeometry();
+
+				var positions = [];
+				var colors = [];
+
+				for ( var i = 0; i < trianglesCount; i ++ ) {
+
+					var x = (Math.random() *4) - 2;
+					var y = (Math.random() *4) - 2;
+
+
+					// adding x,y,z
+					positions.push( x );
+					positions.push( y );
+					positions.push( 0 );
+
+					// adding r,g,b,a
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+
+					// adding x,y,z
+					positions.push( x + 0.025);
+					positions.push( y + 0.05);
+					positions.push( 0 );
+
+					// adding r,g,b,a
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+
+					// adding x,y,z
+					positions.push( x + 0.05 );
+					positions.push( y );
+					positions.push( 0 );
+
+					// adding r,g,b,a
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+
+
+
+					
+					// adding x,y,z
+					positions.push( x );
+					positions.push( y + 0.030 );
+					positions.push( 0 );
+
+					// adding r,g,b,a
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+
+					// adding x,y,z
+					positions.push( x + 0.025);
+					positions.push( y - 0.020);
+					positions.push( 0 );
+
+					// adding r,g,b,a
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+
+					// adding x,y,z
+					positions.push( x + 0.05 );
+					positions.push( y + 0.030 );
+					positions.push( 0 );
+
+					// adding r,g,b,a
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+					colors.push( Math.random() * 255 );
+					
+					
+
+				}
+
+				var positionAttribute = new THREE.Float32BufferAttribute( positions, 3 );
+				var colorAttribute = new THREE.Uint8BufferAttribute( colors, 4 );
+
+				colorAttribute.normalized = true; // this will map the buffer values to 0.0f - +1.0f in the shader
+
+				geometry.setAttribute( 'position', positionAttribute );
+				geometry.setAttribute( 'color', colorAttribute );
+
+				// material
+
+				var material = new THREE.RawShaderMaterial( {
+
+					uniforms: {
+						time: { value: 1.0 }
+					},
+					vertexShader: document.getElementById( 'vertexShaderRaw' ).textContent,
+					fragmentShader: document.getElementById( 'fragmentShaderRaw' ).textContent,
+					side: THREE.DoubleSide,
+					transparent: true
+
+				} );
+
+				var mesh = new THREE.Mesh( geometry, material );
+
+				
+
+
+				scene.add( mesh );
+
+
+
+
+
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				container.appendChild( renderer.domElement );
+
+				stats = new Stats();
+				container.appendChild( stats.dom );
+
+				onWindowResize();
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			//
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				render();
+				stats.update();
+
+			}
+
+			function render() {
+
+				var delta = clock.getDelta();
+
+				
+
+				for ( var i = 0; i < scene.children.length; i ++ ) {
+
+					var object = scene.children[ i ];
+
+					object.rotation.y += delta * 0.5 * ( i % 2 ? 1 : - 1 );
+					object.rotation.x += delta * 0.5 * ( i % 2 ? - 1 : 1 );
+
+				}
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+</html>
